@@ -26,4 +26,24 @@ This is a relatively recent add to Azure Automation (announced September 15th, 2
 
 #### Hybrid Worker
 
-Full details of Hybrid Workers are probably outside of the scope of this conversation, but what you should know about 
+Full details of Hybrid Workers are probably outside of the scope of this conversation, but what you should know about them is that the runbooks are stored in Azure Automation, then delivered to one or more on-premises machines where they run.  This allows you to take advantage of Azure Automation to access resources inside of your datacenter that they probably otherwise didn't have access to.  
+
+### Assets
+
+Assets consists are items within your Automation account that can be shared across runbooks - including variables, modules, and credentials just to name a few.  
+
+### Authentication
+
+In order to access your resources within Azure, your runbook will need to authenticate with your Azure Account.  There are two ways this can be done:
+
+1. Certificate
+2. Azure Active Directory
+
+As a whole, Microsoft is pushing users away from using certificates and towards Azure Active Directory and Service Principals, so that is the approach we are going to take in this presentation.  
+
+### Accessing Runbooks Programmatically
+
+There are two ways runbooks can be run programmatically.
+
+1. Webhooks
+2. Azure SDK (Microsoft.WindowsAzure.Management.Automation nuget package)
