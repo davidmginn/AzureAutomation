@@ -19,7 +19,7 @@ There are two pricing tiers for Azure Automation
 
 These are the original runbooks available in Azure Automation.  These runbooks take full advantage of Windows Workflow Foundation and offer parallel execution, checkpoints, and suspend and resume capabilities.  This makes PowerShell Workflow ideal for tasks that aren't dependent upon one another (for example, starting up a number of Virtual Machines), as the tasks can run in parallel and take up less processing time.  The  downfall to PowerShell Workflow is that there are differences from the PowerShell Scripting that many of us (myself included) are used to writing.  Another minor disadvantage to Workflow is that the runbook must be compiled before starting, which can take a bit longer.  
 
-Examples of differences include the inability to use positional parameters, as well as deserialized objects.  Because objects are deserialized in PowerShell workflow, you can view the properties of them, however you cannot execute methods on the objects.  In order to execute methods on objects, they must be run using an InlineScript command.  This command is available in order to run commands as traditional PowerShell instead of Workflow.
+Examples of differences include the inability to use positional parameters, as well as the use deserialized objects.  Because objects are deserialized in PowerShell workflow, you can view the properties of them, however you cannot execute methods on the objects.  In order to execute methods on objects, they must be run using an InlineScript command.  This command is available in order to run commands as traditional PowerShell instead of Workflow.
 
 #### PowerShell
 
@@ -37,7 +37,14 @@ Runbooks also have the ability to invoke child runbooks.  Child runbooks can be 
 
 Personally, I believe the choice comes down to what our starting point is.  If you have a library of existing existing PowerShell that you are migrating, PowerShell runbooks are probably your best choice.  If you are starting from scratch, Workflow runbooks offer a number of powerful features that may make them a better choice.  If you have the need to access on-premises resources, Workflow runbooks are your only choice.
 
-*Demo - Build a Basic Workflow Runbook accesses a Virtual Machine, show the process of creation, editing, testing*
+*Example*
+
+```
+workflow Demo
+{
+	Get-AzureVM -Name DGinnDemoVM -ServiceName DGinnDemoVM
+}
+```
 
 ### Authentication
 
@@ -52,7 +59,24 @@ As a whole, Microsoft is pushing users away from using certificates and towards 
 
 Assets consists are items within your Automation account that can be shared across runbooks - including variables, modules, and credentials just to name a few.  
 
-*Demo - Add Authentication as an asset into this runbook and access an Azure Resource*
+*Example*
+```
+workflow Demo
+{
+	$cred = Get-AutomationPSCredential -Name "AutomationDemo"
+
+	Add-AzureAccount -Credential $cred
+	Select-AzureSubscription -subscriptionName "Visual Studio Premium with MSDN"
+
+	$vm = Get-AzureVM -Name DGinnDemoVM -ServiceName DGinnDemoVM
+
+	Write-Output $vm
+
+	Start-AzureVM -Name DGinnDemoVM -ServiceName DGinnDemoVM
+
+	Start-AzureWebsite -Name AzureAutomationDemo
+}
+```
 
 *Demo - Add Service Bus Module, add service bus settings as variables*
 
@@ -65,12 +89,35 @@ There are two ways runbooks can be run programmatically.
 
 Webhooks are my preferred way of programmatically starting runbooks.  Using a simple POST request with JSON data, we can execute from virtually any other system.  The biggest downfall to this method is the manner in which the JSON values have to be read within the runbook - which is different from the parameters that it will already be taking.
 
+*Demo*
+```
+workflow WebhookDemo
+{
+	param (
+        [object]$WebhookData
+    )
+
+    # If runbook was called from Webhook, WebhookData will not be null.
+    if ($WebhookData -ne $null) {
+        # Collect properties of WebhookData.
+        $WebhookName    =   $WebhookData.WebhookName
+        $WebhookBody    =   $WebhookData.RequestBody
+        $WebhookHeaders =   $WebhookData.RequestHeader
+
+        # Obtain the WebhookBody containing the AlertContext
+        $WebhookBody = (ConvertFrom-Json -InputObject $WebhookBody)
+
+		Write-Output $WebhookBody
+	}
+}
+```
+
+*Demo starting a runbook using Postman - show job running and out output, write parameters to output*
+
+*Demo scheduling a runbook*
+
 ### Azure Automation Limitations
 
 At the present time, Azure Automation only natively supports the Service Management (legacy) cmdlets.  You can however import the Azure Resource Manager cmdlets as a module and run these if needed.
-
-*Demo starting a runbook using Postman - show job running and out output*
-
-*Demo scheduling a runbook*
 
 *Walkthrough Rackspace use case*
