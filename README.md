@@ -78,7 +78,21 @@ workflow Demo
 }
 ```
 
-*Demo - Add Service Bus Module, add service bus settings as variables*
+*Example*
+
+```
+workflow ModuleAndVariables
+{
+	$BaseUrl = Get-AutomationVariable -Name "BaseUrl"
+	$TopicName = Get-AutomationVariable -Name "TopicName"
+	$Key = Get-AutomationVariable -Name "Key"
+	$Secret = Get-AutomationVariable -Name "Secret"
+
+	$Message = "Hello Cincinnati Azure User Group"
+
+	New-AzureServiceBusMessage -baseUrl $BaseUrl -topicName $TopicName -secret $Secret -key $Key -body $Message
+}
+```
 
 ### Accessing Runbooks Programmatically
 
@@ -89,7 +103,7 @@ There are two ways runbooks can be run programmatically.
 
 Webhooks are my preferred way of programmatically starting runbooks.  Using a simple POST request with JSON data, we can execute from virtually any other system.  The biggest downfall to this method is the manner in which the JSON values have to be read within the runbook - which is different from the parameters that it will already be taking.
 
-*Demo*
+*Example*
 ```
 workflow WebhookDemo
 {
@@ -107,14 +121,49 @@ workflow WebhookDemo
         # Obtain the WebhookBody containing the AlertContext
         $WebhookBody = (ConvertFrom-Json -InputObject $WebhookBody)
 
-		Write-Output $WebhookBody
+		$Name = $WebhookBody.VMName
+		$ServiceName = $WebhookBody.ServiceName
+
+		Write-Output $Name
+
+		Write-Output $ServiceName
 	}
 }
 ```
 
-*Demo starting a runbook using Postman - show job running and out output, write parameters to output*
+*Example*
+```
+workflow WebhookWithParametersDemo
+{
+	param (
+		[string]$Name,
+		[string]$ServiceName,
+        [object]$WebhookData
+    )
 
-*Demo scheduling a runbook*
+    if ($WebhookData -ne $null) {
+
+        $WebhookName    =   $WebhookData.WebhookName
+        $WebhookBody    =   $WebhookData.RequestBody
+        $WebhookHeaders =   $WebhookData.RequestHeader
+
+        $WebhookBody = (ConvertFrom-Json -InputObject $WebhookBody)
+
+		$Name = $WebhookBody.VMName
+		$ServiceName = $WebhookBody.ServiceName
+	}
+
+	Write-Output $Name
+
+	Write-Output $ServiceName
+}
+```
+
+### Scheduling
+
+In order to make runbooks more useful, there are fairly powerful scheduling capabilities built in.  You can define a schedule as an asset, and then leverage it within one or more runbooks.  This is useful for recurring jobs, such as turning on a virtual machine at the start of the day, and turning it off at the end of the day.
+
+*Demo*
 
 ### Azure Automation Limitations
 
